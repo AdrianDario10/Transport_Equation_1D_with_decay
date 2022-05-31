@@ -44,7 +44,7 @@ class PINN:
         #f = self.network(tx_bnd)*self.network(tx_bnd)*self.network(tx_bnd) - self.network(tx_bnd)   
 
         # equation output being zero
-        u_eqn = du_dt + self.c * du_dx
+        u_eqn = du_dt + self.c * du_dx + u / 2
         # initial condition output
         u_ini, du_dt_ini, _, _, _ = self.grads(tx_ini)
         # boundary condition output
