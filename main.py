@@ -1,12 +1,8 @@
-import lib.tf_silent
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 from matplotlib.gridspec import GridSpec
-from lib.pinn import PINN
-from lib.network import Network
-from lib.optimizer import L_BFGS_B
 from numpy import linalg as LA
 
 def u0(tx, c=1, k=2, sd=0.5):
