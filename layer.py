@@ -2,7 +2,7 @@ import tensorflow as tf
 
 class GradientLayer(tf.keras.layers.Layer):
     """
-    Custom layer to compute 1st and 2nd derivatives, but we only need the 1st derivatives for the transport equation
+    Custom layer to compute 1st and 2nd derivatives, but we only need the 1st derivatives for the transport equation with decay
     Attributes:
         model: keras network model.
     """
@@ -18,7 +18,7 @@ class GradientLayer(tf.keras.layers.Layer):
 
     def call(self, tx):
         """
-        Computing 1st and 2nd derivatives for the transport equation.
+        Computing derivatives for the transport equation.
         Args:
             tx: input variables (t, x).
         Returns:
