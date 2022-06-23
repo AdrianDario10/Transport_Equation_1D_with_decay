@@ -1,43 +1,31 @@
+import tf_silent
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
+from pinn import PINN
+from network import Network
+from optimizer import L_BFGS_B
 from matplotlib.colors import Normalize
 from matplotlib.gridspec import GridSpec
 from numpy import linalg as LA
-
-def u0(tx, c=1, k=2, sd=0.5):
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator
+    
+def u0(tx):
     """
     Initial wave form.
     Args:
         tx: variables (t, x) as tf.Tensor.
-        c: wave velocity.
-        k: wave number.
-        sd: standard deviation.
     Returns:
         u(t, x) as tf.Tensor.
     """
 
     t = tx[..., 0, None]
     x = tx[..., 1, None]
-    #z = k*x - (c*k)*t
 
 
-    return   1/(1+x**2) #tf.sin(z) * tf.exp(-(0.5*z/sd)**2)  #x*x*x-x   #tf.cos(2*x+t)  
+    return   1/(1+x**2)
 
-#def du0_dt(tx):
-#    """
-#    First derivative of t for the initial wave form.
-#    Args:
-#        tx: variables (t, x) as tf.Tensor.
-#    Returns:
-#        du(t, x)/dt as tf.Tensor.
-#    """
-#
-#    with tf.GradientTape() as g:
-#        g.watch(tx)
-#        u = u0(tx)
-#    du_dt = g.batch_jacobian(u, tx)[..., 0]
-#    return du_dt
 
 if __name__ == '__main__':
     """
@@ -55,21 +43,9 @@ if __name__ == '__main__':
     pinn = PINN(network).build()
 
     # Time and space domain
-    t=3
-    x_f=3
-    x_ini=-3
-    num = np.sqrt(num_train_samples)
-    num = int(np.round(num,0))
-
-    epsilon=1e-4
-    x_=np.linspace(x_ini +epsilon,x_f-epsilon,num)
-    t_=np.linspace(0+epsilon,t-epsilon,num)
-
-    T, X = np.meshgrid(t_,x_)
-
-    #tx_eqn=np.random.rand(num**2, 2)
-    #tx_eqn[...,0]= T.reshape((num**2,))
-    #tx_eqn[...,1]= X.reshape((num**2,))
+    t=2
+    x_f=2
+    x_ini=-2
 
     # create training input
     tx_eqn = np.random.rand(num_train_samples, 2)#halton(2, num_train_samples)#np.random.rand(num_train_samples, 2)
@@ -81,7 +57,6 @@ if __name__ == '__main__':
     # create training output
     u_zero = np.zeros((num_train_samples, 1))
     u_ini = u0(tf.constant(tx_ini)).numpy()
-    ##du_dt_ini = du0_dt(tf.constant(tx_ini)).numpy()
 
     # train the model using L-BFGS-B algorithm
     x_train = [tx_eqn, tx_ini]
@@ -90,16 +65,13 @@ if __name__ == '__main__':
     lbfgs.fit()
 
     # predict u(t,x) distribution
-    t_flat = np.linspace(0, t-1, num_test_samples)
-    x_flat = np.linspace(x_ini+1, x_f-1, num_test_samples)
+    t_flat = np.linspace(0, t, num_test_samples)
+    x_flat = np.linspace(x_ini, x_f, num_test_samples)
     t, x = np.meshgrid(t_flat, x_flat)
     tx = np.stack([t.flatten(), x.flatten()], axis=-1)
     u = network.predict(tx, batch_size=num_test_samples)
     u = u.reshape(t.shape)
-    
 
-   
-    
     # plot u(t,x) distribution as a color-map
 
     fig= plt.figure(figsize=(15,10))
@@ -119,15 +91,9 @@ if __name__ == '__main__':
     cbar.ax.tick_params(labelsize=15)
     plt.show()
 
-    from matplotlib import cm
-    from matplotlib.ticker import LinearLocator
-
-    # ERROR
-
-    U = 1/(1+(x-t)**2) * np.exp(-t/2)   ####
+    # Exact solution U and Error E
+    U = 1/(1+(x-t)**2) * np.exp(-t/2)   
     E = (U-u)
-
-    
     
     fig= plt.figure(figsize=(15,10))
     vmin, vmax = np.min(np.min(E)), np.max(np.max(E))
@@ -146,10 +112,10 @@ if __name__ == '__main__':
     cbar.ax.tick_params(labelsize=15)
     plt.show()
 
-    # Comparison
+    # Comparison at time 0, 1 and 2
 
     fig,(ax1, ax2, ax3)  = plt.subplots(1,3,figsize=(15,6))
-    x_flat_ = np.linspace(x_ini+1, x_f-1, 10)
+    x_flat_ = np.linspace(x_ini, x_f, 10)
 
    
     U_1 = 1/(1+(x_flat_)**2)
@@ -159,13 +125,10 @@ if __name__ == '__main__':
     ax1.plot(x_flat_, U_1,'r*')
     font1 = {'family':'serif','size':20}
     font2 = {'family':'serif','size':15}
-
     ax1.set_title('t={}'.format(0), fontdict = font1)
     ax1.set_xlabel('x', fontdict = font1)
     ax1.set_ylabel('u(t,x)', fontdict = font1)
     ax1.tick_params(labelsize=15)
-    #plt.show()
-    print('\n')
 
     
     U_1 = 1/(1+(x_flat_-1)**2) * np.exp(-1/2)    ####
@@ -177,8 +140,6 @@ if __name__ == '__main__':
     ax2.set_xlabel('x', fontdict = font1)
     ax2.set_ylabel('u(t,x)', fontdict = font1)
     ax2.tick_params(labelsize=15)
-    #plt.show()
-    print('\n')
 
     
     U_1 = 1/(1+(x_flat_-2)**2) * np.exp(-2/2)     ####
@@ -191,6 +152,7 @@ if __name__ == '__main__':
     ax3.set_ylabel('u(t,x)', fontdict = font1)
     ax3.legend(loc='best', fontsize = 'xx-large')
     ax3.tick_params(labelsize=15)
+    
     plt.tight_layout()
     plt.show()
     
