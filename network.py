@@ -2,7 +2,7 @@ import tensorflow as tf
 
 class Network:
     """
-    Build a physics informed neural network (PINN) model for the transport equation.
+    Build a physics informed neural network (PINN) model for the transport equation with decay
     """
 
     @classmethod
